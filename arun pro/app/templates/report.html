@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="glass-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="text-success mb-0">{{ t('audit_reports') }}</h2>
+        <button onclick="window.print()" class="btn btn-success btn-sm no-print">{{ t('print_report') }}</button>
+    </div>
+    <p class="tagline no-print">{{ t('report_tagline') }}</p>
+    <hr>
+
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-dark border-0">
+                    <h5 class="text-success mb-0">{{ t('volunteer_tasks') }}</h5>
+                </div>
+                <div class="card-body bg-dark p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>{{ t('volunteer_name') }}</th>
+                                    <th>{{ t('nss_teams') }}</th>
+                                    <th>{{ t('assigned_task') }}</th>
+                                    <th>{{ t('task_status') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vol in volunteers %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td class="fw-bold text-white">{{ vol.name }}</td>
+                                    <td>{{ vol.team.team_name if vol.team else t('unassigned') }}</td>
+                                    <td>{{ vol.task_assigned or t('general_collection_drive') }}</td>
+                                    <td>
+                                        {% if vol.task_completed %}
+                                        <span class="badge bg-success">{{ t('completed') }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ t('in_progress') }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-3">{{ t('no_volunteers_found') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-dark border-0">
+                    <h5 class="text-success mb-0">{{ t('monthly_waste_aggregates') }}</h5>
+                </div>
+                <div class="card-body bg-dark p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>{{ t('period_month') }}</th>
+                                    <th>{{ t('total_collected') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in waste_data %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td class="fw-bold">{{ item.month }}</td>
+                                    <td class="text-success fw-bold">{{ item.collected_kg }} kg</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-3">{{ t('no_monthly_records') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-dark border-0">
+                    <h5 class="text-success mb-0">{{ t('performance_chart') }}</h5>
+                </div>
+                <div class="card-body bg-dark text-center d-flex align-items-center justify-content-center">
+                    {% if chart_file %}
+                    <img src="{{ url_for('static', filename=chart_file) }}" alt="{{ t('performance_chart') }}" class="img-fluid rounded border border-secondary" style="max-height: 320px; width: auto;">
+                    {% else %}
+                    <p class="text-muted">{{ t('no_chart') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

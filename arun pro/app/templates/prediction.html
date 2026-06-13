@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="glass-container">
+    <h2 class="text-success mb-2">{{ t('predictive_engine') }}</h2>
+    <p class="tagline">{{ t('prediction_tagline') }}</p>
+    <hr>
+
+    <div class="text-center my-4">
+        <button class="btn btn-success btn-lg px-5 py-3" onclick="loadPrediction()">{{ t('run_predictor') }}</button>
+    </div>
+
+    <div id="prediction-result" class="result-box">
+        <p class="text-center text-muted prediction-placeholder mb-0">{{ t('prediction_placeholder') }}</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function loadPrediction() {
+    const resultDiv = document.getElementById('prediction-result');
+    resultDiv.innerHTML = `<div class="text-center py-4 text-success"><div class="spinner-border mb-2" role="status"></div><p class="mb-0">${translate('training_models')}</p></div>`;
+
+    fetch('/api/forecast')
+    .then(res => {
+        if (!res.ok) throw new Error('Model execution failed');
+        return res.json();
+    })
+    .then(data => {
+        resultDiv.innerHTML = '';
+        if (data.length === 0) {
+            resultDiv.innerHTML = `<p class="text-center text-muted py-3">${translate('no_historical_data')}</p>`;
+            return;
+        }
+
+        data.forEach((item, index) => {
+            const district = item.district;
+            const predictions = item.predictions;
+            const card = document.createElement('div');
+            card.className = 'card mb-4 p-3 bg-dark';
+            const localizedDistrict = localizeText(district);
+
+            const title = document.createElement('h5');
+            title.className = 'text-success mb-3 pb-2 border-bottom border-secondary d-flex justify-content-between';
+            title.innerHTML = `<span>${translate('target_region')}: <strong>${localizedDistrict}</strong></span> <span class="badge bg-success">${translate('model_linear_regression')}</span>`;
+            card.appendChild(title);
+
+            const row = document.createElement('div');
+            row.className = 'row g-3';
+
+            const colTable = document.createElement('div');
+            colTable.className = 'col-md-6';
+
+            let tableHTML = `
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>${translate('forecast_period')}</th>
+                                <th>${translate('predicted_quantity')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            predictions.forEach(p => {
+                tableHTML += `<tr><td>${p.month}</td><td class="fw-bold text-success">${p.predicted_kg} kg</td></tr>`;
+            });
+            tableHTML += '</tbody></table></div>';
+            colTable.innerHTML = tableHTML;
+            row.appendChild(colTable);
+
+            const colChart = document.createElement('div');
+            colChart.className = 'col-md-6';
+            const chartDiv = document.createElement('div');
+            chartDiv.style.position = 'relative';
+            chartDiv.style.height = '160px';
+            const canvas = document.createElement('canvas');
+            const canvasId = 'chart-' + district.replace(/\s+/g, '-').toLowerCase() + '-' + index;
+            canvas.id = canvasId;
+            chartDiv.appendChild(canvas);
+            colChart.appendChild(chartDiv);
+            row.appendChild(colChart);
+
+            card.appendChild(row);
+            resultDiv.appendChild(card);
+
+            setTimeout(() => {
+                const chartCtx = document.getElementById(canvasId).getContext('2d');
+                new Chart(chartCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: predictions.map(p => p.month),
+                        datasets: [{
+                            label: translate('quantity_kg'),
+                            data: predictions.map(p => p.predicted_kg),
+                            backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                            borderColor: '#10b981',
+                            borderWidth: 1.5,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { color: 'rgba(255,255,255,0.06)' } },
+                            y: { grid: { color: 'rgba(255,255,255,0.06)' }, beginAtZero: true }
+                        }
+                    }
+                });
+            }, 100);
+        });
+    })
+    .catch(err => {
+        console.error(err);
+        resultDiv.innerHTML = `<p class="text-center text-danger py-3">${translate('prediction_error')}</p>`;
+    });
+}
+</script>
+{% endblock %}

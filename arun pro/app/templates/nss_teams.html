@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="glass-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="text-success mb-0">{{ t('nss_team_management') }}</h2>
+        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addTeamModal">+ {{ t('add_new_team') }}</button>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-info bg-dark border-0 text-success py-2 px-3 mb-3" style="border-radius: 8px;">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <hr>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>{{ t('team_name') }}</th>
+                    <th>{{ t('team_leader') }}</th>
+                    <th>{{ t('target_location') }}</th>
+                    <th>{{ t('status') }}</th>
+                    <th style="width: 200px;">{{ t('actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for team in teams %}
+                <tr id="team-row-{{ team.id }}">
+                    <td>{{ loop.index }}</td>
+                    <td class="fw-bold">{{ team.team_name }}</td>
+                    <td>{{ team.team_leader or t('no_leader') }}</td>
+                    <td>{{ localize(team.location.name) if team.location else t('no_assigned_location') }}</td>
+                    <td>
+                        {% if team.enabled %}
+                        <span class="badge bg-success">{{ t('active') }}</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ t('disabled') }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if current_user.is_admin() %}
+                        <div class="d-flex gap-1">
+                            <a href="{{ url_for('nss.edit_team', id=team.id) }}" class="btn btn-primary btn-sm py-1 px-2">{{ t('edit') }}</a>
+                            {% if team.enabled %}
+                            <form action="{{ url_for('nss.toggle_team', team_id=team.id, status=0) }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-warning btn-sm py-1 px-2">{{ t('disable') }}</button>
+                            </form>
+                            {% else %}
+                            <form action="{{ url_for('nss.toggle_team', team_id=team.id, status=1) }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-success btn-sm py-1 px-2">{{ t('enable') }}</button>
+                            </form>
+                            {% endif %}
+                            <form action="{{ url_for('nss.delete_team', id=team.id) }}" method="POST" onsubmit="return confirm('{{ t('delete_team_confirm') }}');" style="display:inline;">
+                                <button type="submit" class="btn btn-danger btn-sm py-1 px-2">{{ t('delete') }}</button>
+                            </form>
+                        </div>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ t('admin_only_actions') }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted">{{ t('no_nss_teams') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-4">
+        <a href="/" class="btn btn-success">{{ t('back_to_home') }}</a>
+    </div>
+</div>
+
+<div class="modal fade" id="addTeamModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 bg-dark">
+                <h5 class="modal-title text-success">{{ t('add_new_team') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-dark">
+                <div class="mb-3">
+                    <label class="form-label">{{ t('team_name') }}</label>
+                    <input type="text" id="team_name" class="form-control" placeholder="e.g. Eco Warriors" required autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('team_leader') }}</label>
+                    <input type="text" id="team_leader" class="form-control" placeholder="Leader's name" required autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('target_location') }}</label>
+                    <select id="team_location" class="form-select">
+                        <option value="">{{ t('select_location') }}</option>
+                        {% for location in locations %}
+                        <option value="{{ location.id }}">{{ localize(location.name) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-dark">
+                <button type="button" class="btn btn-success btn-sm" onclick="addTeam()">{{ t('save_team') }}</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ t('cancel') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="glass-container">
+            <h2 class="text-success mb-2">{{ t('edit_nss_team') }}</h2>
+            <hr>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">{{ t('team_name') }}</label>
+                    <input type="text" name="team_name" class="form-control" value="{{ team.team_name }}" required autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('team_leader') }}</label>
+                    <input type="text" name="team_leader" class="form-control" value="{{ team.team_leader }}" required autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('location_state') }}</label>
+                    <select name="location_id" class="form-select">
+                        <option value="">{{ t('select_location') }}</option>
+                        {% for location in locations %}
+                        <option value="{{ location.id }}" {% if team.location_id == location.id %}selected{% endif %}>{{ location.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-4 form-check">
+                    <input type="checkbox" name="enabled" class="form-check-input" id="enabledCheck" {% if team.enabled %}checked{% endif %}>
+                    <label class="form-check-label" for="enabledCheck">{{ t('team_enabled_active') }}</label>
+                </div>
+
+                <div>
+                    <button type="submit" class="btn btn-success me-2">{{ t('save_changes') }}</button>
+                    <a href="{{ url_for('nss.nss_teams') }}" class="btn btn-secondary">{{ t('cancel') }}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

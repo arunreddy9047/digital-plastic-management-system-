@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="{{ current_language }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('certificate') }} - {{ volunteer.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Outfit', sans-serif; padding: 40px 10px; }
+        .action-bar { max-width: 800px; margin: 0 auto 20px auto; text-align: center; }
+        .certificate-container { background: #ffffff; color: #1e293b; border: 16px double #065f46; border-radius: 8px; padding: 60px 50px; max-width: 850px; margin: 0 auto; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4); text-align: center; background-image: radial-gradient(circle at 100% 150%, #d1fae5 24%, white 25%), radial-gradient(circle at 0% 150%, #d1fae5 24%, white 25%); background-color: #ffffff; position: relative; }
+        .cert-header { margin-bottom: 20px; }
+        .certificate-title { font-size: 2.2rem; font-weight: 800; color: #065f46; letter-spacing: 2px; text-transform: uppercase; }
+        .certificate-subtitle { font-family: 'Playfair Display', serif; font-size: 1.25rem; font-style: italic; color: #047857; margin-bottom: 30px; }
+        .cert-for { font-size: 0.95rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .participant-name { font-size: 2.6rem; font-weight: 700; color: #065f46; margin: 10px 0; border-bottom: 2px solid #a7f3d0; display: inline-block; padding-bottom: 5px; min-width: 320px; }
+        .certificate-body { font-family: 'Playfair Display', serif; font-size: 1.15rem; line-height: 1.8; color: #334155; margin: 25px auto; max-width: 650px; }
+        .signatures { display: flex; justify-content: space-between; margin-top: 50px; text-align: center; padding: 0 40px; }
+        .signatures div { display: flex; flex-direction: column; align-items: center; width: 35%; }
+        .signatures .line { border-top: 1px solid #64748b; width: 150px; margin-bottom: 8px; }
+        .signatures p { font-size: 0.85rem; color: #64748b; margin: 0; font-weight: 600; }
+        @media print {
+            body { background: #ffffff !important; color: #000000 !important; margin: 0 !important; padding: 0 !important; }
+            .no-print { display: none !important; visibility: hidden !important; }
+            .certificate-container { border: 12px double #065f46 !important; box-shadow: none !important; margin: 0 auto !important; top: 50%; left: 50%; transform: translate(-50%, -50%); position: absolute; width: 100% !important; max-width: 100% !important; padding: 40px !important; background-color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            @page { size: landscape; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="action-bar no-print">
+        <button onclick="window.print()" class="btn btn-success me-2">{{ t('print_or_save_pdf') }}</button>
+        <a href="{{ url_for('nss.volunteers') }}" class="btn btn-secondary">{{ t('back_to_volunteers') }}</a>
+    </div>
+
+    <div class="certificate-container">
+        <div class="cert-header">
+            <div class="certificate-title">{{ t('certificate_title') }}</div>
+            <div class="certificate-subtitle">{{ t('certificate_subtitle') }}</div>
+        </div>
+
+        <div class="cert-for">{{ t('certificate_presented_to') }}</div>
+        <div class="participant-name">{{ volunteer.name }}</div>
+
+        <div class="certificate-body">
+            {{ t('certificate_body', team=volunteer.team.team_name if volunteer.team else t('general_volunteer_group'), hours=volunteer.hours_worked, impact=volunteer.impact or t('assisted_local_waste_reduction')) }}
+        </div>
+
+        <div class="signatures">
+            <div>
+                <div class="line"></div>
+                <p>{{ t('nss_coordinator') }}</p>
+                <small class="text-muted">{{ t('eplastic_program') }}</small>
+            </div>
+            <div>
+                <div class="line"></div>
+                <p>{{ t('regional_director') }}</p>
+                <small class="text-muted">{{ t('environmental_welfare_board') }}</small>
+            </div>
+        </div>
+    </div>
+
+    {% if auto_print %}
+    <script>
+        window.onload = function() {
+            window.print();
+        }
+    </script>
+    {% endif %}
+</body>
+</html>

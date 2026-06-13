@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="glass-container">
+    <h2 class="text-success mb-2">{{ t('waste_management_dashboard') }}</h2>
+    <p class="tagline">{{ t('dashboard_tagline') }}</p>
+    <hr>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card summary-card p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-secondary mb-1">{{ t('total_volunteers') }}</h6>
+                        <h2 class="mb-0 fw-bold">{{ stats.volunteers }}</h2>
+                    </div>
+                    <div class="fs-1 text-success">V</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card summary-card p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-secondary mb-1">{{ t('teams_registered') }}</h6>
+                        <h2 class="mb-0 fw-bold">{{ stats.teams }}</h2>
+                    </div>
+                    <div class="fs-1 text-success">T</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card summary-card p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-secondary mb-1">{{ t('total_plastic_collected') }}</h6>
+                        <h2 class="mb-0 fw-bold">{{ stats.waste|round(2) }} Tons</h2>
+                    </div>
+                    <div class="fs-1 text-success">Tons</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h5 class="text-center mb-3">{{ t('waste_by_location') }}</h5>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="locationChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h5 class="text-center mb-3">{{ t('waste_by_type') }}</h5>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-2">
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h5 class="text-center mb-3">{{ t('waste_over_time') }}</h5>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="timeChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h5 class="text-center mb-3">{{ t('recyclability_breakdown') }}</h5>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="recyclableChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4 text-start">
+        <a href="/" class="btn btn-success">{{ t('back_to_home') }}</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    Chart.defaults.color = '#cbd5e1';
+    Chart.defaults.font.family = "'Outfit', sans-serif";
+
+    const baseOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { boxWidth: 12, padding: 15 }
+            }
+        }
+    };
+
+    fetch('/api/waste-by-location')
+        .then(res => res.json())
+        .then(data => {
+            const ctx = document.getElementById('locationChart').getContext('2d');
+            const districts = Object.keys(data);
+            const weights = Object.values(data);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: districts.length ? districts.map(localizeText) : [translate('no_data')],
+                    datasets: [{
+                        label: translate('weight_kg'),
+                        data: weights.length ? weights : [0],
+                        backgroundColor: 'rgba(16, 185, 129, 0.75)',
+                        borderColor: '#10b981',
+                        borderWidth: 1.5,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    ...baseOptions,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.06)' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.06)' }, beginAtZero: true }
+                    }
+                }
+            });
+        });
+
+    fetch('/api/waste-by-type')
+        .then(res => res.json())
+        .then(data => {
+            const ctx = document.getElementById('typeChart').getContext('2d');
+            const types = Object.keys(data);
+            const weights = Object.values(data);
+
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: types.length ? types.map(localizeText) : [translate('no_data')],
+                    datasets: [{
+                        data: weights.length ? weights : [0],
+                        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#06b6d4', '#6366f1', '#a855f7', '#f43f5e', '#64748b'],
+                        borderWidth: 1,
+                        borderColor: '#1e293b'
+                    }]
+                },
+                options: baseOptions
+            });
+        });
+
+    fetch('/api/waste-over-time')
+        .then(res => res.json())
+        .then(data => {
+            const ctx = document.getElementById('timeChart').getContext('2d');
+            const months = Object.keys(data);
+            const weights = Object.values(data);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months.length ? months : [translate('no_data')],
+                    datasets: [{
+                        label: translate('waste_collected_kg'),
+                        data: weights.length ? weights : [0],
+                        borderColor: '#34d399',
+                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#10b981'
+                    }]
+                },
+                options: {
+                    ...baseOptions,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.06)' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.06)' }, beginAtZero: true }
+                    }
+                }
+            });
+        });
+
+    fetch('/api/recyclable-vs-nonrecyclable')
+        .then(res => res.json())
+        .then(data => {
+            const ctx = document.getElementById('recyclableChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        data: Object.values(data),
+                        backgroundColor: ['#10b981', '#ef4444'],
+                        borderWidth: 1,
+                        borderColor: '#1e293b'
+                    }]
+                },
+                options: baseOptions
+            });
+        });
+</script>
+{% endblock %}

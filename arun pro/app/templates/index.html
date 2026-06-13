@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block body_class %}home-page{% endblock %}
+{% block content %}
+<div class="welcome-section glass-container text-center mt-5">
+    <h1 class="text-success">{{ t('welcome_title') }}</h1>
+    <p class="tagline">{{ t('welcome_tagline') }}</p>
+
+    <div class="home-buttons mt-5">
+        <a href="{{ url_for('data.entry') }}" class="btn btn-success btn-lg me-2 mb-3">{{ t('add_waste_record') }}</a>
+        <a href="{{ url_for('data.records') }}" class="btn btn-success btn-lg me-2 mb-3">{{ t('view_records') }}</a>
+        <a href="{{ url_for('analysis.dashboard') }}" class="btn btn-success btn-lg me-2 mb-3">{{ t('dashboard_analytics') }}</a>
+        <a href="{{ url_for('predict.prediction') }}" class="btn btn-success btn-lg me-2 mb-3">{{ t('prediction_engine') }}</a>
+        <a href="{{ url_for('nss.nss_teams') }}" class="btn btn-success btn-lg me-2 mb-3">{{ t('nss_teams') }}</a>
+        <a href="{{ url_for('nss.volunteers') }}" class="btn btn-success btn-lg me-2 mb-3">{{ t('volunteers_list') }}</a>
+        <a href="{{ url_for('events.events') }}" class="btn btn-success btn-lg mb-3">{{ t('events_awareness') }}</a>
+    </div>
+</div>
+{% endblock %}

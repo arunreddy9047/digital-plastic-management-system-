@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="glass-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="text-success mb-0">{{ t('registrations_log') }}</h2>
+            <h5 class="text-secondary mt-1">{{ localize(event.name) }} ({{ event.event_date }})</h5>
+        </div>
+        <a href="{{ url_for('events.events') }}" class="btn btn-secondary btn-sm">{{ t('back_to_events') }}</a>
+    </div>
+    <hr>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>{{ t('name') }}</th>
+                    <th>{{ t('email') }}</th>
+                    <th>{{ t('phone') }}</th>
+                    <th>{{ t('team_college') }}</th>
+                    <th>{{ t('registered_at') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reg in registrations %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td class="fw-bold">{{ reg.name }}</td>
+                    <td>{{ reg.email }}</td>
+                    <td>{{ reg.phone }}</td>
+                    <td>{{ reg.team_name }}</td>
+                    <td>{{ reg.registered_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted">{{ t('no_registrations') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

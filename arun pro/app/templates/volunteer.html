@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="glass-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="text-success mb-0">{{ t('volunteer_management') }}</h2>
+        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addVolunteerModal">+ {{ t('add_new_volunteer') }}</button>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-info bg-dark border-0 text-success py-2 px-3 mb-3" style="border-radius: 8px;">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <hr>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>{{ t('name') }}</th>
+                    <th>{{ t('email') }}</th>
+                    <th>{{ t('phone') }}</th>
+                    <th>{{ t('nss_teams') }}</th>
+                    <th>{{ t('joined_date') }}</th>
+                    <th>{{ t('contribution') }}</th>
+                    <th>{{ t('hours') }}</th>
+                    <th>{{ t('impact') }}</th>
+                    <th style="width: 220px;">{{ t('actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for volunteer in volunteers %}
+                <tr id="vol-row-{{ volunteer.id }}">
+                    <td>{{ loop.index }}</td>
+                    <td class="fw-bold">{{ volunteer.name }}</td>
+                    <td>{{ volunteer.email }}</td>
+                    <td>{{ volunteer.phone or t('na') }}</td>
+                    <td>{{ volunteer.team.team_name if volunteer.team else t('unassigned') }}</td>
+                    <td>{{ volunteer.joined_date }}</td>
+                    <td>{{ volunteer.contribution_type or t('general') }}</td>
+                    <td>{{ volunteer.hours_worked }} hrs</td>
+                    <td><small>{{ volunteer.impact or t('none_recorded') }}</small></td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            {% if current_user.is_admin() %}
+                            <a href="{{ url_for('nss.edit_volunteer', id=volunteer.id) }}" class="btn btn-primary btn-sm py-1 px-2">{{ t('edit') }}</a>
+                            <a href="{{ url_for('nss.generate_certificate', id=volunteer.id) }}" class="btn btn-warning btn-sm py-1 px-2 text-dark">{{ t('certificate') }}</a>
+                            <form action="{{ url_for('nss.delete_volunteer', id=volunteer.id) }}" method="POST" onsubmit="return confirm('{{ t('delete_volunteer_confirm') }}');" style="display:inline;">
+                                <button type="submit" class="btn btn-danger btn-sm py-1 px-2">{{ t('delete') }}</button>
+                            </form>
+                            {% else %}
+                            <a href="{{ url_for('nss.generate_certificate', id=volunteer.id) }}" class="btn btn-warning btn-sm py-1 px-2 text-dark">{{ t('certificate') }}</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" class="text-center text-muted">{{ t('no_volunteers_registered') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-4">
+        <a href="/" class="btn btn-success">{{ t('back_to_home') }}</a>
+    </div>
+</div>
+
+<div class="modal fade" id="addVolunteerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 bg-dark">
+                <h5 class="modal-title text-success">{{ t('add_new_volunteer') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-dark">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('full_name') }} *</label>
+                        <input type="text" id="vol_name" class="form-control" placeholder="e.g. John Doe" required autocomplete="off">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('email_address') }} *</label>
+                        <input type="email" id="vol_email" class="form-control" placeholder="e.g. john@example.com" required autocomplete="off">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('phone_number') }}</label>
+                        <input type="text" id="vol_phone" class="form-control" placeholder="e.g. +91 9999999999" autocomplete="off">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('team_assignment') }}</label>
+                        <select id="vol_team" class="form-select">
+                            <option value="">{{ t('select_team') }}</option>
+                            {% for team in teams %}
+                            {% if team.enabled %}
+                            <option value="{{ team.id }}">{{ team.team_name }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('joined_date') }} *</label>
+                        <input type="date" id="vol_date" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('contribution_type') }}</label>
+                        <input type="text" id="vol_contribution" class="form-control" placeholder="e.g. Plastic Clean-Up Drive" autocomplete="off">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('hours_worked') }}</label>
+                        <input type="number" id="vol_hours" class="form-control" min="0" placeholder="e.g. 5">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('impact_details') }}</label>
+                        <input type="text" id="vol_impact" class="form-control" placeholder="e.g. Collected 8kg packaging waste" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-dark">
+                <button type="button" class="btn btn-success btn-sm" onclick="addVolunteer()">{{ t('save_volunteer') }}</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ t('cancel') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+    document.getElementById('vol_date').valueAsDate = new Date();
+</script>
+{% endblock %}

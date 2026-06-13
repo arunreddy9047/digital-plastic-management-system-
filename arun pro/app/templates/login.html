@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="glass-container">
+            <div class="d-flex justify-content-center gap-2 mb-4">
+                <a href="{{ url_for('auth.login', login_type='user') }}" class="btn {% if login_type == 'user' %}btn-success{% else %}btn-outline-success{% endif %}">{{ t('user_login') }}</a>
+                <a href="{{ url_for('auth.login', login_type='admin') }}" class="btn {% if login_type == 'admin' %}btn-success{% else %}btn-outline-success{% endif %}">{{ t('admin_login') }}</a>
+            </div>
+
+            <h3 class="text-center text-success mb-4">{{ t('admin_login' if login_type == 'admin' else 'user_login') }}</h3>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="alert alert-danger border-0 bg-danger text-white py-2 px-3 mb-3" style="border-radius: 8px;">
+                        {{ messages[0] }}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">{{ t('username') }}</label>
+                    <input type="text" name="username" class="form-control" placeholder="{{ t('enter_username') }}" required autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('password') }}</label>
+                    <input type="password" name="password" class="form-control" placeholder="{{ t('enter_password') }}" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100 mt-2">{{ t('login') }}</button>
+
+                {% if login_type == 'user' %}
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('auth.register') }}" class="text-success text-decoration-none">{{ t('dont_have_account') }}</a>
+                </div>
+                {% else %}
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('auth.login', login_type='user') }}" class="text-success text-decoration-none">{{ t('continue_as_user') }}</a>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

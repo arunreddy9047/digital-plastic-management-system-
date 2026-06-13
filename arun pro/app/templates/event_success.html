@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="glass-container text-center py-5">
+            <h2 class="text-success mb-3">{{ t('registration_successful') }}</h2>
+            <p class="tagline">{{ t('registration_success_message') }}<br><strong>{{ localize(event.name) }}</strong></p>
+            <p class="text-secondary mt-3">{{ t('date') }}: {{ event.event_date }}</p>
+
+            <div class="mt-5">
+                <a href="{{ url_for('events.events') }}" class="btn btn-success me-2">{{ t('back_to_events') }}</a>
+                <a href="/" class="btn btn-secondary">{{ t('go_to_home') }}</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

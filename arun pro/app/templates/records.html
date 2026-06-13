@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="glass-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="text-success mb-0">{{ t('all_waste_records') }}</h2>
+        <a href="{{ url_for('data.entry') }}" class="btn btn-success btn-sm">+ {{ t('add_new_record') }}</a>
+    </div>
+    <hr>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>{{ t('location_state') }}</th>
+                    <th>{{ t('plastic_type') }}</th>
+                    <th>{{ t('Tons') }}</th>
+                    <th>{{ t('date') }}</th>
+                    <th>{{ t('recorded_by') }}</th>
+                    <th style="width: 150px;">{{ t('actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record, location_name, plastic_name in records %}
+                <tr id="row-{{ record.id }}">
+                    <td>{{ loop.index }}</td>
+                    <td>{{ localize(location_name) }}</td>
+                    <td>{{ localize(plastic_name) }}</td>
+                    <td id="qty-{{ record.id }}" class="fw-bold">{{ tons }} tons</td>
+                    <td id="date-{{ record.id }}">{{ record.recorded_date }}</td>
+                    <td id="by-{{ record.id }}">{{ record.recorded_by }}</td>
+                    <td>
+                        {% if current_user.is_admin() %}
+                        <button type="button" class="btn btn-warning btn-sm me-1 py-1 px-2 edit-record-btn"
+                            data-id="{{ record.id }}" data-qty="{{ record.quantity_kg }}"
+                            data-date="{{ record.recorded_date }}" data-by="{{ record.recorded_by | escape }}">
+                            {{ t('edit') }}
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm py-1 px-2 delete-record-btn"
+                            data-id="{{ record.id }}">
+                            {{ t('delete') }}
+                        </button>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ t('view_only') }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted">{{ t('no_waste_records') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-4">
+        <a href="/" class="btn btn-success">{{ t('back_to_home') }}</a>
+    </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark border-0">
+                <h5 class="modal-title text-success">{{ t('edit_waste_record') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-dark">
+                <input type="hidden" id="editId">
+                <div class="mb-3">
+                    <label class="form-label">{{ t('quantity_kg') }}</label>
+                    <input type="number" id="editQty" class="form-control" step="0.1" min="0.1" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('date') }}</label>
+                    <input type="date" id="editDate" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('recorded_by') }}</label>
+                    <input type="text" id="editBy" class="form-control" required>
+                </div>
+            </div>
+            <div class="modal-footer bg-dark border-0">
+                <button class="btn btn-success btn-sm" onclick="saveEdit()">{{ t('save_changes') }}</button>
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ t('cancel') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function deleteRecord(id) {
+        if (confirm(translate('delete_record_confirm'))) {
+            fetch('/api/delete-record/' + id, { method: 'DELETE' })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    document.getElementById('row-' + id).remove();
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert(translate('error_deleting_record'));
+                });
+        }
+    }
+
+    function editRecord(id, qty, date, by) {
+        document.getElementById('editId').value = id;
+        document.getElementById('editQty').value = qty;
+        document.getElementById('editDate').value = date;
+        document.getElementById('editBy').value = by;
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+    }
+
+    function saveEdit() {
+        const id = document.getElementById('editId').value;
+        const data = {
+            quantity_kg: parseFloat(document.getElementById('editQty').value),
+            date: document.getElementById('editDate').value,
+            recorded_by: document.getElementById('editBy').value.trim()
+        };
+
+        if (isNaN(data.quantity_kg) || !data.date || !data.recorded_by) {
+            alert(translate('all_fields_required'));
+            return;
+        }
+
+        fetch('/api/edit-record/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+            .then(res => res.json())
+            .then(result => {
+                alert(result.message);
+                location.reload();
+            })
+            .catch(err => {
+                console.error(err);
+                alert(translate('failed_to_update_record'));
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.edit-record-btn').forEach(function(button) {
+            button.addEventListener('click', function() {
+                editRecord(
+                    this.dataset.id,
+                    this.dataset.qty,
+                    this.dataset.date,
+                    this.dataset.by
+                );
+            });
+        });
+
+        document.querySelectorAll('.delete-record-btn').forEach(function(button) {
+            button.addEventListener('click', function() {
+                deleteRecord(this.dataset.id);
+            });
+        });
+    });
+</script>
+{% endblock %}

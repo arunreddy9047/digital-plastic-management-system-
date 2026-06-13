@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="glass-container">
+            <h3 class="text-center text-success mb-4">{{ t('create_account') }}</h3>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="alert alert-warning border-0 bg-warning text-dark py-2 px-3 mb-3" style="border-radius: 8px;">
+                        {{ messages[0] }}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">{{ t('username') }}</label>
+                    <input type="text" name="username" class="form-control" placeholder="{{ t('choose_username') }}" required autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('password') }}</label>
+                    <input type="password" name="password" class="form-control" placeholder="{{ t('choose_password') }}" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100 mt-2">{{ t('create_account') }}</button>
+
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('auth.login', login_type='user') }}" class="text-success text-decoration-none">{{ t('already_have_account') }}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

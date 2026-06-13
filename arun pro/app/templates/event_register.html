@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="glass-container">
+            <h2 class="text-success mb-2">{{ t('register_for_campaign') }}</h2>
+            <h5 class="text-secondary mb-3">{{ localize(event.name) }} ({{ event.event_date }})</h5>
+            <hr>
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">{{ t('full_name') }}</label>
+                    <input type="text" name="name" class="form-control" placeholder="{{ t('full_name') }}" required autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('email_address') }}</label>
+                    <input type="email" name="email" class="form-control" placeholder="{{ t('email_address') }}" required autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('phone_number') }}</label>
+                    <input type="text" name="phone" class="form-control" placeholder="{{ t('phone_number') }}" required autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('team_or_college') }}</label>
+                    <input type="text" name="team_name" class="form-control" placeholder="{{ t('team_or_college') }}" required autocomplete="off">
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success me-2">{{ t('submit_registration') }}</button>
+                    <a href="{{ url_for('events.events') }}" class="btn btn-secondary">{{ t('cancel') }}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

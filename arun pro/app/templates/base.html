@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="{{ current_language }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('app_title') }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <nav class="navbar navbar-expand-lg navbar-dark no-print">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('data.index') }}">
+                <span>{{ t('brand_name') }}</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarContent">
+                {% if current_user.is_authenticated %}
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('data.index') }}">{{ t('home') }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('analysis.dashboard') }}">{{ t('dashboard') }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('data.entry') }}">{{ t('add_record') }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('data.records') }}">{{ t('records') }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('nss.nss_teams') }}">{{ t('nss_teams') }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('nss.volunteers') }}">{{ t('volunteers') }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('events.events') }}">{{ t('events') }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('predict.prediction') }}">{{ t('prediction') }}</a></li>
+                    {% if current_user.is_admin() %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('report.report') }}">{{ t('reports') }}</a></li>
+                    {% endif %}
+                </ul>
+                <div class="d-flex align-items-center">
+                    <div class="btn-group btn-group-sm me-3" role="group" aria-label="{{ t('language') }}">
+                        <a href="{{ url_for('set_language', lang='en') }}" class="btn {% if current_language == 'en' %}btn-success{% else %}btn-outline-success{% endif %}">EN</a>
+                        <a href="{{ url_for('set_language', lang='kn') }}" class="btn {% if current_language == 'kn' %}btn-success{% else %}btn-outline-success{% endif %}">ಕನ್ನಡ</a>
+                    </div>
+                    <span class="navbar-text text-white me-3">
+                        {{ t('logged_in_as') }}: {{ current_user.username }}
+                        <span class="badge bg-success ms-1 text-capitalize">{{ t('admin' if current_user.is_admin() else 'user') }}</span>
+                    </span>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-success btn-sm">{{ t('logout') }}</a>
+                </div>
+                {% else %}
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item me-2 d-flex align-items-center">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="{{ t('language') }}">
+                            <a href="{{ url_for('set_language', lang='en') }}" class="btn {% if current_language == 'en' %}btn-success{% else %}btn-outline-success{% endif %}">EN</a>
+                            <a href="{{ url_for('set_language', lang='kn') }}" class="btn {% if current_language == 'kn' %}btn-success{% else %}btn-outline-success{% endif %}">ಕನ್ನಡ</a>
+                        </div>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login', login_type='user') }}">{{ t('login') }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.register') }}">{{ t('register') }}</a></li>
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        window.APP_TRANSLATIONS = {{ client_translations|tojson }};
+        window.APP_DYNAMIC_LABELS = {{ client_dynamic_labels|tojson }};
+        window.translate = function(key) {
+            return window.APP_TRANSLATIONS[key] || key;
+        };
+        window.localizeText = function(value) {
+            return window.APP_DYNAMIC_LABELS[value] || value;
+        };
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="glass-container">
+            <h2 class="text-success mb-2">{{ t('add_waste_record') }}</h2>
+            <hr>
+            <form id="entryForm">
+                <div class="mb-3">
+                    <label class="form-label">{{ t('location_state') }}</label>
+                    <select id="location_id" class="form-select" required>
+                        <option value="">{{ t('select_location') }}</option>
+                        {% for location in locations %}
+                        <option value="{{ location.id }}">{{ localize(location.name) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('plastic_type') }}</label>
+                    <select id="plastic_type_id" class="form-select" required>
+                        <option value="">{{ t('select_plastic_type') }}</option>
+                        {% for plastic in plastic_types %}
+                        <option value="{{ plastic.id }}">{{ localize(plastic.name) }} {% if plastic.recyclable %}({{ t('recyclable') }}){% else %}({{ t('non_recyclable') }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('quantity_kg') }}</label>
+                    <input type="number" id="quantity_kg" class="form-control" min="0.1" step="0.1" placeholder="e.g. 15.5" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('date_of_collection') }}</label>
+                    <input type="date" id="date" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('recorded_by') }}</label>
+                    <input type="text" id="recorded_by" class="form-control" placeholder="{{ t('recorders_name') }}" required autocomplete="off">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">{{ t('nss_team_optional') }}</label>
+                    <select id="team_id" class="form-select">
+                        <option value="">{{ t('select_team') }}</option>
+                        {% for team in nss_teams %}
+                        <option value="{{ team.id }}">{{ team.team_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success me-2">{{ t('submit_record') }}</button>
+                    <a href="{{ url_for('data.index') }}" class="btn btn-secondary">{{ t('back_to_home') }}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+    document.getElementById('date').valueAsDate = new Date();
+</script>
+{% endblock %}

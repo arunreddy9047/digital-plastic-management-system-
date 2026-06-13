@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="glass-container">
+            <h2 class="text-success mb-2">{{ t('edit_volunteer_profile') }}</h2>
+            <hr>
+            <form method="POST">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('full_name') }}</label>
+                        <input type="text" name="name" class="form-control" value="{{ volunteer.name }}" required autocomplete="off">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('email_address') }}</label>
+                        <input type="email" name="email" class="form-control" value="{{ volunteer.email }}" required autocomplete="off">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('phone_number') }}</label>
+                        <input type="text" name="phone" class="form-control" value="{{ volunteer.phone or '' }}" autocomplete="off">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('nss_teams') }}</label>
+                        <select name="team_id" class="form-select">
+                            <option value="">{{ t('select_team') }}</option>
+                            {% for team in teams %}
+                            <option value="{{ team.id }}" {% if volunteer.team_id == team.id %}selected{% endif %}>{{ team.team_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('joined_date') }}</label>
+                        <input type="date" name="joined_date" class="form-control" value="{{ volunteer.joined_date }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('contribution_type') }}</label>
+                        <input type="text" name="contribution_type" class="form-control" value="{{ volunteer.contribution_type or '' }}" autocomplete="off">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('hours_worked') }}</label>
+                        <input type="number" name="hours_worked" class="form-control" value="{{ volunteer.hours_worked or 0 }}" min="0">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ t('impact_details') }}</label>
+                        <input type="text" name="impact" class="form-control" value="{{ volunteer.impact or '' }}" autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success me-2">{{ t('update_volunteer') }}</button>
+                    <a href="{{ url_for('nss.volunteers') }}" class="btn btn-secondary">{{ t('cancel') }}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
