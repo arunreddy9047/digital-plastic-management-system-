@@ -3,3 +3,4 @@ Flask-SQLAlchemy>=3.0
 Flask-Login>=0.6
 Werkzeug>=3.0
 Click>=8.0
+matplotlib>=3.0
