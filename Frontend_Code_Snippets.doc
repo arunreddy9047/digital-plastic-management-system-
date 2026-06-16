@@ -1,0 +1,197 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset="utf-8">
+    <title>Frontend Logic Code Snippets - Digital Plastic Management System</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5; }
+        h2 { text-align: center; color: #222; }
+        h3 { color: #333; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-top: 24px; }
+        pre { background-color: #f4f4f4; border: 1px solid #ccc; padding: 10px; font-family: Consolas, 'Courier New', monospace; font-size: 9.5pt; white-space: pre-wrap; word-wrap: break-word; }
+        p.explanation { margin-top: 6px; font-style: italic; color: #444; }
+        hr { border: none; border-top: 1px solid #aaa; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<h2>Frontend Logic &ndash; Code Snippets</h2>
+<p style="text-align:center;"><strong>Digital Plastic Management System</strong></p>
+
+<hr>
+
+<h3>1. Base Layout &amp; Navigation (base.html)</h3>
+<pre>
+&lt;!DOCTYPE html&gt;
+&lt;html lang="{{ current_language }}"&gt;
+&lt;head&gt;
+    &lt;title&gt;{{ t('app_title') }}&lt;/title&gt;
+    &lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"&gt;
+    &lt;link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;nav class="navbar navbar-expand-lg navbar-dark"&gt;
+        &lt;div class="container-fluid"&gt;
+            &lt;a class="navbar-brand" href="{{ url_for('data.index') }}"&gt;{{ t('brand_name') }}&lt;/a&gt;
+            &lt;div class="collapse navbar-collapse"&gt;
+                {% if current_user.is_authenticated %}
+                &lt;ul class="navbar-nav me-auto"&gt;
+                    &lt;li class="nav-item"&gt;&lt;a href="{{ url_for('analysis.dashboard') }}"&gt;{{ t('dashboard') }}&lt;/a&gt;&lt;/li&gt;
+                    &lt;li class="nav-item"&gt;&lt;a href="{{ url_for('data.entry') }}"&gt;{{ t('add_record') }}&lt;/a&gt;&lt;/li&gt;
+                    &lt;li class="nav-item"&gt;&lt;a href="{{ url_for('nss.nss_teams') }}"&gt;{{ t('nss_teams') }}&lt;/a&gt;&lt;/li&gt;
+                    {% if current_user.is_admin() %}
+                    &lt;li class="nav-item"&gt;&lt;a href="{{ url_for('report.report') }}"&gt;{{ t('reports') }}&lt;/a&gt;&lt;/li&gt;
+                    {% endif %}
+                &lt;/ul&gt;
+                &lt;div class="d-flex align-items-center"&gt;
+                    &lt;span class="text-white me-3"&gt;User: {{ current_user.username }}&lt;/span&gt;
+                    &lt;a href="{{ url_for('auth.logout') }}" class="btn btn-outline-success btn-sm"&gt;Logout&lt;/a&gt;
+                &lt;/div&gt;
+                {% endif %}
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/nav&gt;
+
+    &lt;div class="container mt-4"&gt;
+        {% block content %}{% endblock %}
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+<p class="explanation"><strong>Explanation:</strong> This is the master template for the application. It establishes the global layout, imports Bootstrap CSS/JS, and handles role-based navigation. Using Jinja2 templating block tags (<code>{% block content %}</code>), all other pages inherit this layout, ensuring a consistent user experience. It also handles dynamic rendering of Admin-only links.</p>
+
+<hr>
+
+<h3>2. Dynamic Chart Rendering Logic (dashboard.html)</h3>
+<pre>
+&lt;div class="row mt-4"&gt;
+    &lt;div class="col-md-6"&gt;
+        &lt;canvas id="locationChart"&gt;&lt;/canvas&gt;
+    &lt;/div&gt;
+    &lt;div class="col-md-6"&gt;
+        &lt;canvas id="typeChart"&gt;&lt;/canvas&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script src="https://cdn.jsdelivr.net/npm/chart.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+    // Fetch and render Waste by Location Bar Chart
+    fetch('/api/waste-by-location')
+        .then(res =&gt; res.json())
+        .then(data =&gt; {
+            new Chart(document.getElementById('locationChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        label: 'Weight (kg)',
+                        data: Object.values(data),
+                        backgroundColor: '#10b981'
+                    }]
+                }
+            });
+        });
+
+    // Fetch and render Waste by Plastic Type Pie Chart
+    fetch('/api/waste-by-type')
+        .then(res =&gt; res.json())
+        .then(data =&gt; {
+            new Chart(document.getElementById('typeChart').getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        data: Object.values(data),
+                        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444']
+                    }]
+                }
+            });
+        });
+&lt;/script&gt;
+</pre>
+<p class="explanation"><strong>Explanation:</strong> The dashboard UI asynchronously fetches aggregated waste metrics from the backend JSON APIs using the native JavaScript <code>fetch()</code> API. Once the data arrives, it initializes Chart.js instances to draw interactive Bar and Pie charts inside HTML5 <code>&lt;canvas&gt;</code> elements.</p>
+
+<hr>
+
+<h3>3. Waste Data Entry Form Interface (entry.html)</h3>
+<pre>
+&lt;form id="entryForm"&gt;
+    &lt;div class="mb-3"&gt;
+        &lt;label class="form-label"&gt;Location / State&lt;/label&gt;
+        &lt;select id="location_id" class="form-select" required&gt;
+            &lt;option value=""&gt;Select Location&lt;/option&gt;
+            {% for location in locations %}
+            &lt;option value="{{ location.id }}"&gt;{{ location.name }}&lt;/option&gt;
+            {% endfor %}
+        &lt;/select&gt;
+    &lt;/div&gt;
+    &lt;div class="mb-3"&gt;
+        &lt;label class="form-label"&gt;Plastic Type&lt;/label&gt;
+        &lt;select id="plastic_type_id" class="form-select" required&gt;
+            {% for plastic in plastic_types %}
+            &lt;option value="{{ plastic.id }}"&gt;{{ plastic.name }}&lt;/option&gt;
+            {% endfor %}
+        &lt;/select&gt;
+    &lt;/div&gt;
+    &lt;div class="mb-3"&gt;
+        &lt;label class="form-label"&gt;Quantity (kg)&lt;/label&gt;
+        &lt;input type="number" id="quantity_kg" class="form-control" step="0.1" required&gt;
+    &lt;/div&gt;
+    &lt;div class="mb-3"&gt;
+        &lt;label class="form-label"&gt;Date of Collection&lt;/label&gt;
+        &lt;input type="date" id="date" class="form-control" required&gt;
+    &lt;/div&gt;
+    &lt;button type="submit" class="btn btn-success"&gt;Submit Record&lt;/button&gt;
+&lt;/form&gt;
+
+&lt;script&gt;
+    // Set default date to today
+    document.getElementById('date').valueAsDate = new Date();
+&lt;/script&gt;
+</pre>
+<p class="explanation"><strong>Explanation:</strong> This snippet shows the form where users submit new plastic waste records. Jinja2 templates populate the dropdown select boxes (locations and plastic types) directly from the database objects passed down by the backend route. It includes HTML5 validation (<code>required</code>, <code>type="number"</code>) to prevent bad inputs.</p>
+
+<hr>
+
+<h3>4. AJAX Form Submission Logic (main.js)</h3>
+<pre>
+document.addEventListener('DOMContentLoaded', function() {
+    const entryForm = document.getElementById('entryForm');
+    
+    if (entryForm) {
+        entryForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Stop standard HTML form submission
+
+            // Construct JSON Payload
+            const data = {
+                location_id: document.getElementById('location_id').value,
+                plastic_type_id: document.getElementById('plastic_type_id').value,
+                quantity_kg: parseFloat(document.getElementById('quantity_kg').value),
+                date: document.getElementById('date').value,
+                recorded_by: document.getElementById('recorded_by').value.trim()
+            };
+
+            // Send async POST request to Flask backend API
+            fetch('/api/add-record', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(res =&gt; {
+                if (!res.ok) throw new Error('Network Error');
+                return res.json();
+            })
+            .then(result =&gt; {
+                alert(result.message);
+                entryForm.reset(); // Clear form fields on success
+            })
+            .catch(err =&gt; {
+                console.error(err);
+                alert('Error adding record. Please try again.');
+            });
+        });
+    }
+});
+</pre>
+<p class="explanation"><strong>Explanation:</strong> Instead of performing a full page reload when a form is submitted, this JavaScript file intercepts the form submission using <code>e.preventDefault()</code>. It packages the form inputs into a JSON object and sends it via an AJAX <code>fetch()</code> request to the API backend. This creates a much smoother, single-page-application (SPA) feel for the end user.</p>
+
+</body>
+</html>

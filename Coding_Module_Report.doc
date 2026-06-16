@@ -1,0 +1,118 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset="utf-8">
+    <title>Coding Module Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid black; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        h1, h2, h3 { color: #333; }
+    </style>
+</head>
+<body>
+    <h2 style="text-align: center;">Coding Module Report</h2>
+    <p style="text-align: center;"><strong>Digital Plastic Management System</strong></p>
+    <br>
+
+    <h3>Frontend Modules</h3>
+    <table>
+        <tr>
+            <th>Module Name</th>
+            <th>Main Logic/Code</th>
+            <th>Small Description</th>
+        </tr>
+        <tr>
+            <td>Authentication Pages</td>
+            <td>User credentials and account creation forms</td>
+            <td>Collects user login and registration details to send to the backend for verification.</td>
+        </tr>
+        <tr>
+            <td>Dashboard</td>
+            <td>Fetch and display system statistics</td>
+            <td>Provides a high-level overview of total volunteers, active teams, and collected waste.</td>
+        </tr>
+        <tr>
+            <td>Data Entry Page</td>
+            <td>Form validation for waste submission</td>
+            <td>Allows users to input and submit new plastic waste collection records into the system.</td>
+        </tr>
+        <tr>
+            <td>Waste Records View</td>
+            <td>Historical data table display</td>
+            <td>Lists previously recorded waste collection data for review and management.</td>
+        </tr>
+        <tr>
+            <td>Events &amp; Registration</td>
+            <td>Event listing and participant forms</td>
+            <td>Displays environmental campaigns and handles user registrations for events.</td>
+        </tr>
+        <tr>
+            <td>NSS Teams &amp; Volunteers</td>
+            <td>Team management and volunteer interface</td>
+            <td>Shows active NSS teams, volunteer profiles, and their assigned contributions.</td>
+        </tr>
+        <tr>
+            <td>Prediction &amp; Analytics</td>
+            <td>Data visualization and trend display</td>
+            <td>Presents graphical charts of collected waste and displays future waste generation forecasts.</td>
+        </tr>
+        <tr>
+            <td>Navigation Layout</td>
+            <td>Route handling and page navigation</td>
+            <td>The base layout providing consistent menus to navigate across different pages seamlessly.</td>
+        </tr>
+    </table>
+
+    <br>
+
+    <h3>Backend Modules</h3>
+    <table>
+        <tr>
+            <th>Module Name</th>
+            <th>Main Logic/Code</th>
+            <th>Small Description</th>
+        </tr>
+        <tr>
+            <td>Authentication Module</td>
+            <td>User login, registration, and session management</td>
+            <td>Securely hashes passwords, validates user credentials, and controls access to the system.</td>
+        </tr>
+        <tr>
+            <td>Data Entry Module</td>
+            <td>Waste records CRUD operations</td>
+            <td>Processes, stores, and updates incoming plastic waste collection data in the database.</td>
+        </tr>
+        <tr>
+            <td>NSS &amp; Volunteer Module</td>
+            <td>Team and volunteer management logic</td>
+            <td>Handles the creation, enabling/disabling, and assignment of NSS teams and volunteers.</td>
+        </tr>
+        <tr>
+            <td>Events Module</td>
+            <td>Event creation and participant processing</td>
+            <td>Manages official environmental campaigns and records user registrations for those events.</td>
+        </tr>
+        <tr>
+            <td>Analysis Module</td>
+            <td>Data aggregation and statistical APIs</td>
+            <td>Computes waste metrics (e.g., waste by location, recyclable vs. non-recyclable) to feed dashboard metrics.</td>
+        </tr>
+        <tr>
+            <td>Prediction Module</td>
+            <td>Data mining and forecasting execution</td>
+            <td>Integrates predictive modeling to forecast future waste generation trends based on historical data.</td>
+        </tr>
+        <tr>
+            <td>Reporting Module</td>
+            <td>Report generation and data visualization</td>
+            <td>Compiles waste collection data and dynamically generates visual charts for management review.</td>
+        </tr>
+        <tr>
+            <td>Database Module</td>
+            <td>ORM and Database Schema definition</td>
+            <td>Defines the core tables and relationships (Users, Locations, Plastics, Teams, Records) using SQLAlchemy.</td>
+        </tr>
+    </table>
+</body>
+</html>

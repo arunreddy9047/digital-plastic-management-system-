@@ -4,7 +4,7 @@ import traceback
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-APP_DIR = ROOT / "arun pro"
+APP_DIR = ROOT / "arun_pro"
 
 # Expose names at module level so Vercel's static analyzer finds them.
 app = None

@@ -1,0 +1,445 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset="utf-8">
+    <title>Core Logic Code Snippets - Digital Plastic Management System</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5; }
+        h2 { text-align: center; color: #222; }
+        h3 { color: #333; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-top: 24px; }
+        pre { background-color: #f4f4f4; border: 1px solid #ccc; padding: 10px; font-family: Consolas, 'Courier New', monospace; font-size: 9.5pt; white-space: pre-wrap; word-wrap: break-word; }
+        p.explanation { margin-top: 6px; font-style: italic; color: #444; }
+        hr { border: none; border-top: 1px solid #aaa; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<h2>Core Logic &ndash; Code Snippets</h2>
+<p style="text-align:center;"><strong>Digital Plastic Management System</strong></p>
+
+<hr>
+
+<h3>1. Database Models (models.py)</h3>
+<pre>
+from app import db
+from flask_login import UserMixin
+from datetime import datetime
+
+class User(UserMixin, db.Model):
+    __tablename__ = 'users'
+    id       = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), nullable=False, unique=True)
+    password = db.Column(db.String(200), nullable=False)
+    role     = db.Column(db.String(20), default='user')
+    is_superuser = db.Column(db.Boolean, default=False)
+
+    def is_admin(self):
+        return self.role == 'admin' or self.is_superuser
+
+class Location(db.Model):
+    __tablename__ = 'locations'
+    id    = db.Column(db.Integer, primary_key=True)
+    name  = db.Column(db.String(100), nullable=False)
+    city  = db.Column(db.String(100))
+    state = db.Column(db.String(100))
+
+class PlasticType(db.Model):
+    __tablename__ = 'plastic_types'
+    id         = db.Column(db.Integer, primary_key=True)
+    name       = db.Column(db.String(100), nullable=False)
+    recyclable = db.Column(db.Boolean, default=True)
+
+class NSSTeam(db.Model):
+    __tablename__ = 'nss_teams'
+    id          = db.Column(db.Integer, primary_key=True)
+    team_name   = db.Column(db.String(100), nullable=False)
+    team_leader = db.Column(db.String(100))
+    location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
+    enabled     = db.Column(db.Boolean, default=True)
+    location    = db.relationship('Location', backref='teams')
+    volunteers  = db.relationship('Volunteer', backref='team', lazy=True)
+
+class Volunteer(db.Model):
+    __tablename__ = 'volunteers'
+    id                = db.Column(db.Integer, primary_key=True)
+    name              = db.Column(db.String(100), nullable=False)
+    email             = db.Column(db.String(100))
+    phone             = db.Column(db.String(15))
+    team_id           = db.Column(db.Integer, db.ForeignKey('nss_teams.id'))
+    joined_date       = db.Column(db.Date)
+    task_assigned     = db.Column(db.String(200))
+    task_completed    = db.Column(db.Boolean, default=False)
+    contribution_type = db.Column(db.String(100))
+    hours_worked      = db.Column(db.Integer, default=0)
+    impact            = db.Column(db.String(200))
+
+class WasteRecord(db.Model):
+    __tablename__ = 'waste_records'
+    id              = db.Column(db.Integer, primary_key=True)
+    location_id     = db.Column(db.Integer, db.ForeignKey('locations.id'))
+    plastic_type_id = db.Column(db.Integer, db.ForeignKey('plastic_types.id'))
+    quantity_kg     = db.Column(db.Numeric(10, 2), nullable=False)
+    recorded_date   = db.Column(db.Date, nullable=False)
+    recorded_by     = db.Column(db.String(100))
+    team_id         = db.Column(db.Integer, db.ForeignKey('nss_teams.id'))
+    location     = db.relationship('Location', backref='waste_records')
+    plastic_type = db.relationship('PlasticType', backref='waste_records')
+    team         = db.relationship('NSSTeam', backref='waste_records')
+
+class Event(db.Model):
+    __tablename__ = 'events'
+    id            = db.Column(db.Integer, primary_key=True)
+    name          = db.Column(db.String(200), nullable=False)
+    event_date    = db.Column(db.String(50), nullable=False)
+    description   = db.Column(db.Text)
+    is_fixed      = db.Column(db.Boolean, default=False)
+    registrations = db.relationship('EventRegistration', backref='event',
+                                    lazy=True, cascade="all, delete-orphan")
+
+class EventRegistration(db.Model):
+    __tablename__ = 'event_registrations'
+    id            = db.Column(db.Integer, primary_key=True)
+    event_id      = db.Column(db.Integer, db.ForeignKey('events.id'))
+    name          = db.Column(db.String(100), nullable=False)
+    email         = db.Column(db.String(100))
+    phone         = db.Column(db.String(15))
+    team_name     = db.Column(db.String(100))
+    registered_at = db.Column(db.DateTime, default=datetime.utcnow)
+</pre>
+<p class="explanation"><strong>Explanation:</strong> These SQLAlchemy ORM models define the entire database schema. User handles authentication with role-based access (admin/user). Location stores Karnataka district data. PlasticType categorises waste as recyclable or non-recyclable. NSSTeam and Volunteer manage team hierarchies. WasteRecord is the central table linking location, plastic type, and team for each waste entry. Event and EventRegistration track environmental campaigns and participant sign-ups.</p>
+
+<hr>
+
+<h3>2. Application Factory &amp; User Authentication (__init__.py)</h3>
+<pre>
+db = SQLAlchemy()
+login_manager = LoginManager()
+
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(Config)
+
+    db.init_app(app)
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+
+    # Register all Blueprints
+    app.register_blueprint(data_bp)
+    app.register_blueprint(analysis_bp)
+    app.register_blueprint(predict_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(nss_bp)
+    app.register_blueprint(events_bp)
+    app.register_blueprint(report_bp)
+
+    return app
+</pre>
+<p class="explanation"><strong>Explanation:</strong> The factory pattern initialises Flask, connects SQLAlchemy (database) and Flask-Login (session management), and registers all feature blueprints. user_loader retrieves the logged-in user from the database on every request.</p>
+
+<hr>
+
+<h3>3. User Login &amp; Registration (auth.py)</h3>
+<pre>
+@auth_bp.route('/login', methods=['GET', 'POST'])
+def login(login_type='user'):
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = User.query.filter_by(username=username).first()
+
+        if user and check_password_hash(user.password, password):
+            if login_type == 'admin' and not user.is_admin():
+                flash(translate('admin_login_required'))
+                return render_template('login.html', login_type=login_type)
+            login_user(user)
+            return redirect(url_for('data.index'))
+        else:
+            flash(translate('wrong_username_or_password'))
+    return render_template('login.html', login_type=login_type)
+
+@auth_bp.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if not User.query.filter_by(username=username).first():
+            hashed_password = generate_password_hash(password)
+            new_user = User(username=username, password=hashed_password, role='user')
+            db.session.add(new_user)
+            db.session.commit()
+            return redirect(url_for('auth.login', login_type='user'))
+    return render_template('register.html')
+</pre>
+<p class="explanation"><strong>Explanation:</strong> Login validates credentials using Werkzeug's check_password_hash and enforces role-based access (admin vs. user login portals). Registration hashes passwords before storing them, preventing plain-text storage.</p>
+
+<hr>
+
+<h3>4. Waste Data Entry &ndash; CRUD Operations (data_entry.py)</h3>
+<pre>
+@data_bp.route('/api/add-record', methods=['POST'])
+@login_required
+def add_record():
+    data = request.json
+    record = WasteRecord(
+        location_id    = int(data['location_id']),
+        plastic_type_id= int(data['plastic_type_id']),
+        quantity_kg    = Decimal(str(data['quantity_kg'])),
+        recorded_date  = datetime.strptime(data['date'], '%Y-%m-%d').date(),
+        recorded_by    = data.get('recorded_by', 'Unknown'),
+        team_id        = int(data['team_id']) if data.get('team_id') else None
+    )
+    db.session.add(record)
+    db.session.commit()
+    return jsonify({'message': 'Record added successfully'})
+
+@data_bp.route('/api/delete-record/&lt;int:id&gt;', methods=['DELETE'])
+@login_required
+def delete_record(id):
+    if not current_user.is_admin():
+        return jsonify({'message': 'Admin access only'}), 403
+    record = WasteRecord.query.get(id)
+    if record:
+        db.session.delete(record)
+        db.session.commit()
+        return jsonify({'message': 'Record deleted successfully'})
+    return jsonify({'message': 'Record not found'}), 404
+
+@data_bp.route('/api/edit-record/&lt;int:id&gt;', methods=['PUT'])
+@login_required
+def edit_record(id):
+    if not current_user.is_admin():
+        return jsonify({'message': 'Admin access only'}), 403
+    record = WasteRecord.query.get(id)
+    if record:
+        data = request.json
+        record.quantity_kg   = Decimal(str(data['quantity_kg']))
+        record.recorded_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+        record.recorded_by   = data.get('recorded_by', 'Unknown')
+        db.session.commit()
+        return jsonify({'message': 'Record updated successfully'})
+    return jsonify({'message': 'Record not found'}), 404
+</pre>
+<p class="explanation"><strong>Explanation:</strong> Provides full Create, Read, Update, Delete operations for waste records via JSON APIs. Only admin users are authorised to edit or delete records. Data is validated and parsed before writing to the database.</p>
+
+<hr>
+
+<h3>5. Data Analysis &amp; Dashboard APIs (analysis.py)</h3>
+<pre>
+@analysis_bp.route('/dashboard')
+@login_required
+def dashboard():
+    volunteer_count = db.session.query(func.count(Volunteer.id)).scalar() or 0
+    team_count      = db.session.query(func.count(NSSTeam.id)).scalar() or 0
+    total_waste     = db.session.query(func.sum(WasteRecord.quantity_kg)).scalar() or 0
+    return render_template('dashboard.html', stats={
+        'volunteers': volunteer_count,
+        'teams': team_count,
+        'waste': float(total_waste)
+    })
+
+@analysis_bp.route('/api/waste-by-location')
+@login_required
+def waste_by_location():
+    results = db.session.query(
+        Location.name, func.sum(WasteRecord.quantity_kg)
+    ).join(WasteRecord, Location.id == WasteRecord.location_id
+    ).group_by(Location.name).all()
+    return jsonify({row[0]: float(row[1]) for row in results})
+
+@analysis_bp.route('/api/recyclable-vs-nonrecyclable')
+@login_required
+def recyclable_vs_non():
+    recyclable = db.session.query(func.sum(WasteRecord.quantity_kg)
+        ).join(PlasticType).filter(PlasticType.recyclable == True).scalar() or 0
+    non_recyclable = db.session.query(func.sum(WasteRecord.quantity_kg)
+        ).join(PlasticType).filter(PlasticType.recyclable == False).scalar() or 0
+    return jsonify({
+        'Recyclable': float(recyclable),
+        'Non-Recyclable': float(non_recyclable)
+    })
+</pre>
+<p class="explanation"><strong>Explanation:</strong> The dashboard aggregates volunteer count, team count, and total waste collected using SQL aggregate functions (COUNT, SUM). The API endpoints group waste by location and by recyclability, returning JSON data consumed by the frontend charts.</p>
+
+<hr>
+
+<h3>6. Waste Prediction &ndash; Linear Regression Forecasting (predictor.py)</h3>
+<pre>
+def _linear_regression_projection(monthly_totals, future_months):
+    points   = sorted(monthly_totals.items())
+    x_values = [point[0] for point in points]
+    y_values = [point[1] for point in points]
+
+    x_mean = sum(x_values) / len(x_values)
+    y_mean = sum(y_values) / len(y_values)
+
+    numerator   = sum((x - x_mean) * (y - y_mean) for x, y in zip(x_values, y_values))
+    denominator = sum((x - x_mean) ** 2 for x in x_values)
+
+    slope     = numerator / denominator
+    intercept = y_mean - (slope * x_mean)
+
+    predictions = []
+    for year, month, month_label in future_months:
+        future_x  = year * 12 + month
+        predicted = (slope * future_x) + intercept
+        predictions.append({
+            "month": month_label,
+            "predicted_kg": max(0.1, round(float(predicted), 2))
+        })
+    return predictions
+
+def forecast():
+    locations = Location.query.all()
+    results   = []
+    last_record = WasteRecord.query.order_by(WasteRecord.recorded_date.desc()).first()
+    base_year   = last_record.recorded_date.year if last_record else datetime.now().year
+    base_month  = last_record.recorded_date.month if last_record else datetime.now().month
+    future_months = _build_future_months(base_year, base_month)
+
+    for location in locations:
+        records = WasteRecord.query.filter_by(location_id=location.id).all()
+        if not records:
+            continue
+        monthly_totals = {}
+        for record in records:
+            key = record.recorded_date.year * 12 + record.recorded_date.month
+            monthly_totals[key] = monthly_totals.get(key, 0.0) + float(record.quantity_kg)
+        predictions = _linear_regression_projection(monthly_totals, future_months)
+        if predictions:
+            results.append({"district": location.name, "predictions": predictions})
+    return results
+</pre>
+<p class="explanation"><strong>Explanation:</strong> This is the data mining core of the project. It uses Linear Regression (slope-intercept formula: y = mx + b) to forecast plastic waste for the next 3 months per district. Historical waste records are grouped by month, the regression line is computed, and future values are projected. A simple average-based fallback is used when insufficient data points exist.</p>
+
+<hr>
+
+<h3>7. NSS Team &amp; Volunteer Management (nss.py)</h3>
+<pre>
+@nss_bp.route('/api/add-team', methods=['POST'])
+@login_required
+def add_team():
+    data = request.json
+    team = NSSTeam(
+        team_name   = data['team_name'],
+        team_leader = data['team_leader'],
+        location_id = int(data['location_id']) if data['location_id'] else None,
+        enabled     = True
+    )
+    db.session.add(team)
+    db.session.commit()
+    return jsonify({'message': 'Team added successfully'})
+
+@nss_bp.route('/api/add-volunteer', methods=['POST'])
+@login_required
+def add_volunteer():
+    data = request.json
+    volunteer = Volunteer(
+        name              = data['name'],
+        email             = data['email'],
+        phone             = data['phone'],
+        team_id           = int(data['team_id']) if data['team_id'] else None,
+        joined_date       = parse_date(data['joined_date']),
+        contribution_type = data.get('contribution_type'),
+        hours_worked      = int(data.get('hours_worked') or 0),
+        impact            = data.get('impact')
+    )
+    db.session.add(volunteer)
+    db.session.commit()
+    return jsonify({'message': 'Volunteer added successfully'})
+
+@nss_bp.route('/certificate/&lt;int:id&gt;')
+@login_required
+def generate_certificate(id):
+    volunteer = Volunteer.query.get_or_404(id)
+    return render_template('certificate.html', volunteer=volunteer)
+</pre>
+<p class="explanation"><strong>Explanation:</strong> Manages NSS teams and their volunteers. Admins can add, edit, enable/disable, and delete teams. Volunteers are assigned to teams with tracked contributions. A certificate generation feature renders a printable HTML certificate for each volunteer.</p>
+
+<hr>
+
+<h3>8. Event Management (events.py)</h3>
+<pre>
+@events_bp.route('/api/add-event', methods=['POST'])
+@login_required
+def add_event():
+    data = request.json
+    event = Event(
+        name        = data['name'],
+        event_date  = data['event_date'],
+        description = data['description'],
+        is_fixed    = False
+    )
+    db.session.add(event)
+    db.session.commit()
+    return jsonify({'message': 'Event added successfully'})
+
+@events_bp.route('/events/register/&lt;int:event_id&gt;', methods=['GET', 'POST'])
+@login_required
+def register_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    if request.method == 'POST':
+        registration = EventRegistration(
+            event_id  = event_id,
+            name      = request.form['name'],
+            email     = request.form['email'],
+            phone     = request.form['phone'],
+            team_name = request.form['team_name']
+        )
+        db.session.add(registration)
+        db.session.commit()
+        return redirect(url_for('events.registration_success', event_id=event_id))
+    return render_template('event_register.html', event=event)
+</pre>
+<p class="explanation"><strong>Explanation:</strong> Handles creation of environmental awareness events and participant registration. Fixed/official events (like World Earth Day) are seeded at startup and cannot be deleted. Custom events can be added and removed by admins.</p>
+
+<hr>
+
+<h3>9. Report Generation with Chart (report.py)</h3>
+<pre>
+@report_bp.route("/report")
+@login_required
+@admin_required
+def report():
+    volunteers = Volunteer.query.all()
+    results = db.session.query(
+        func.strftime('%Y-%m', WasteRecord.recorded_date).label('month'),
+        func.sum(WasteRecord.quantity_kg)
+    ).group_by('month').order_by('month').all()
+    months = [r[0] for r in results]
+    values = [float(r[1]) for r in results]
+
+    # Generate bar chart using Matplotlib
+    plt.figure(figsize=(8, 4))
+    plt.bar(months, values, color="#10b981")
+    plt.title("Monthly Waste Collection Performance (kg)")
+    plt.savefig("app/static/waste_chart.png")
+    plt.close()
+
+    return render_template("report.html", volunteers=volunteers,
+                           waste_data=table_waste_data, chart_file="waste_chart.png")
+</pre>
+<p class="explanation"><strong>Explanation:</strong> Admin-only route that generates a comprehensive management report. It queries monthly waste totals, renders a styled bar chart using Matplotlib, saves it as a static image, and passes volunteer data and chart to the report template.</p>
+
+<hr>
+
+<h3>10. Admin Access Decorator (auth_utils.py)</h3>
+<pre>
+def admin_required(view_func):
+    @wraps(view_func)
+    def wrapped_view(*args, **kwargs):
+        if current_user.is_admin():
+            return view_func(*args, **kwargs)
+        message = translate("admin_access_only")
+        if request.path.startswith("/api/") or request.is_json:
+            return jsonify({"message": message}), 403
+        flash(message)
+        return redirect(url_for("data.index"))
+    return wrapped_view
+</pre>
+<p class="explanation"><strong>Explanation:</strong> A reusable Python decorator that restricts route access to admin users only. For API calls it returns a 403 JSON error; for page requests it redirects with a flash message. Applied to sensitive routes like the report page.</p>
+
+</body>
+</html>
