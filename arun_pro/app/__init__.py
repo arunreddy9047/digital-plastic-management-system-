@@ -42,7 +42,13 @@ def create_app():
     from app.routes.auth import auth_bp
     from app.routes.nss import nss_bp
     from app.routes.events import events_bp
-    from app.routes.report import report_bp
+    report_bp = None
+    try:
+        from app.routes.report import report_bp
+    except Exception as e:
+        import traceback
+        print("Warning: failed to import report_bp:", e)
+        traceback.print_exc()
     
     app.register_blueprint(data_bp)
     app.register_blueprint(analysis_bp)
@@ -50,7 +56,8 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(nss_bp)
     app.register_blueprint(events_bp)
-    app.register_blueprint(report_bp)
+    if report_bp is not None:
+        app.register_blueprint(report_bp)
 
     @app.route('/set-language/<lang>')
     def set_language(lang):
